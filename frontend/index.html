@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Data Risk Scanner</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ══ TOPBAR ════════════════════════════════════════════════════ -->
+  <header class="topbar">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+      </div>
+      <div>
+        <span class="logo-text">AI Data Risk Scanner</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="api-status">
+        <div class="api-status-dot" id="api-dot"></div>
+        <span id="api-label">API CONNECTED</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ SIDEBAR ═══════════════════════════════════════════════════ -->
+  <nav class="sidebar">
+    <div class="sidebar-label">Analysis</div>
+
+    <div class="nav-item active" data-page="scanner" onclick="navigateTo('scanner')">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Scan Document
+    </div>
+
+    <div class="sidebar-label">Reports</div>
+
+    <div class="nav-item" data-page="dashboard" onclick="navigateTo('dashboard')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </div>
+
+    <div class="nav-item" data-page="audit" onclick="navigateTo('audit')">
+      <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Audit Log
+    </div>
+  </nav>
+
+  <!-- ══ CONTENIDO PRINCIPAL ═══════════════════════════════════════ -->
+  <main class="main">
+
+    <!-- ── PÁGINA: SCANNER ────────────────────────────────────────── -->
+    <section class="page active" id="page-scanner">
+      <h1 class="page-title">Scan Document</h1>
+      <p class="page-subtitle">
+        Upload a PDF or DOCX file to detect, classify, and anonymize sensitive data.
+      </p>
+
+      <!-- Métricas rápidas del scanner -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Total Analyzed</div>
+          <div class="metric-value" id="scanner-total">—</div>
+          <div class="metric-sub">Since the beginning</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Types Detected</div>
+          <div class="metric-value">11</div>
+          <div class="metric-sub">Active Categories</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Supported Formats</div>
+          <div class="metric-value" style="font-size:16px">PDF · DOCX</div>
+          <div class="metric-sub">Max. 10 MB</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Detection Model</div>
+          <div class="metric-value" style="font-size:13px">spaCy + regex</div>
+          <div class="metric-sub">Local Processing</div>
+        </div>
+      </div>
+
+      <!-- Banner de error -->
+      <div class="alert-banner" id="error-banner" style="display:none">
+        <div class="alert-dot"></div>
+        <div>
+          <div class="alert-text" id="error-msg">Unknown error</div>
+        </div>
+        <button class="btn" style="margin-left:auto" onclick="document.getElementById('error-banner').style.display='none'">✕</button>
+      </div>
+
+      <!-- Zona de subida -->
+      <div class="upload-zone" id="upload-zone">
+        <input
+          type="file"
+          accept=".pdf,.docx"
+          onchange="handleFileInput(this)"
+          title="Seleccionar archivo"
+        />
+        <div class="upload-icon-wrap">
+          <svg viewBox="0 0 24 24">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="upload-title">Drag your document here</div>
+        <div class="upload-sub">PDF · DOCX · max. 10 MB</div>
+        <button class="upload-btn" onclick="event.stopPropagation(); document.querySelector('#upload-zone input').click()">
+          Select File
+        </button>
+      </div>
+
+      <!-- Panel: analizando -->
+      <div class="analyzing-panel" id="analyzing-panel">
+        <div class="analyzing-header">
+          <div class="spinner"></div>
+          <div>
+            <div class="analyzing-title">Analyzing document...</div>
+            <div class="analyzing-file" id="analyzing-filename"></div>
+          </div>
+        </div>
+        <div class="steps" id="step-list"></div>
+      </div>
+
+      <!-- Panel: resultado -->
+      <div class="result-panel" id="result-panel"></div>
+
+    </section>
+
+    <!-- ── PÁGINA: DASHBOARD ──────────────────────────────────────── -->
+    <section class="page" id="page-dashboard">
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-subtitle">Strategic view of the organization's document risk.</p>
+
+      <!-- Métricas -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Total Documents</div>
+          <div class="metric-value" id="d-total">—</div>
+          <div class="metric-sub">Analizados en total</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">High / Critical</div>
+          <div class="metric-value danger" id="d-high">—</div>
+          <div class="metric-sub">High Risk Documents</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">% High Risk</div>
+          <div class="metric-value warn" id="d-pct">—</div>
+          <div class="metric-sub">Of total analyzed</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Average Score</div>
+          <div class="metric-value" id="d-avg">—</div>
+          <div class="metric-sub">Out of 100 points</div>
+        </div>
+      </div>
+
+      <!-- Alerta de críticos -->
+      <div class="alert-banner" id="dashboard-alert" style="display:none">
+        <div class="alert-dot"></div>
+        <div>
+          <div class="alert-text">
+            <span id="alert-count">0</span> document(s) in CRITICAL state
+          </div>
+          <div class="alert-sub">Require immediate review and anonymization</div>
+        </div>
+        <button class="btn" style="margin-left:auto" onclick="navigateTo('audit')">
+          View in audit →
+        </button>
+      </div>
+
+      <!-- Gráficas -->
+      <div class="dashboard-grid">
+        <div class="chart-card">
+          <div class="chart-title">Documents by Risk Level</div>
+          <div class="bars" id="bars-container">
+            <div class="empty">No data available yet</div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-title">Most Common Data Types</div>
+          <div id="progress-container">
+            <div class="empty">No data available yet</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PÁGINA: AUDITORÍA ──────────────────────────────────────── -->
+    <section class="page" id="page-audit">
+      <h1 class="page-title">Audit Record</h1>
+      <p class="page-subtitle">
+        Complete and immutable history of all performed analyses.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Document</th>
+              <th>Date and Time</th>
+              <th>Risk Level</th>
+              <th>Score</th>
+              <th>Findings</th>
+            </tr>
+          </thead>
+          <tbody id="audit-tbody">
+            <tr>
+              <td colspan="5">
+                <div class="empty">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  No audit analyses registered yet
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Scripts: api.js y ui.js primero, luego app.js que los usa -->
+<script src="js/api.js" defer></script>
+<script src="js/ui.js" defer></script>
+<script src="js/app.js" defer></script>
+
+</body>
+</html>
